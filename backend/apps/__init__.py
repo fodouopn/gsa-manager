@@ -1,0 +1,2 @@
+# Apps Django - module racine
+

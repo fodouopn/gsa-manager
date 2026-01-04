@@ -1,0 +1,416 @@
+{% comment %}
+Template de base réutilisable pour toutes les impressions du système.
+Inclut : logo, en-tête, totaux (optionnel), cachet de l'entreprise
+{% endcomment %}
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}Document{% endblock %}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1.2cm;
+        }
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 11px;
+            line-height: 1.6;
+            color: #2c3e50;
+            margin: 0;
+            padding: 0;
+            background: #ffffff;
+        }
+        
+        /* Header avec logo et informations entreprise */
+        .document-header {
+            border-bottom: 3px solid #d32f2f;
+            padding-bottom: 20px;
+            margin-bottom: 25px;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            gap: 20px;
+        }
+        
+        .logo-section {
+            display: flex;
+            align-items: flex-start;
+            gap: 25px;
+        }
+        
+        .logo {
+            width: 90px;
+            height: 90px;
+            object-fit: contain;
+            background: white;
+            border-radius: 8px;
+            padding: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            flex-shrink: 0;
+            border: 2px solid #d32f2f;
+        }
+        
+        .logo-placeholder {
+            width: 90px;
+            height: 90px;
+            background: #f5f5f5;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border: 2px solid #d32f2f;
+            flex-shrink: 0;
+        }
+        
+        .logo-placeholder span {
+            color: #d32f2f;
+            font-size: 10px;
+            font-weight: bold;
+        }
+        
+        .company-info {
+            flex: 1;
+        }
+        
+        .company-name {
+            font-size: 20px;
+            font-weight: 700;
+            margin: 0 0 8px 0;
+            color: #d32f2f;
+        }
+        
+        .company-details {
+            font-size: 10px;
+            line-height: 1.8;
+            color: #495057;
+        }
+        
+        .company-details p {
+            margin: 2px 0;
+            padding: 0;
+            line-height: 1.6;
+            display: block;
+        }
+        
+        .company-details p:first-of-type {
+            margin-top: 0;
+        }
+        
+        .company-details p:last-of-type {
+            margin-bottom: 0;
+        }
+        
+        .document-title-section {
+            text-align: right;
+            background: #f8f9fa;
+            padding: 15px 20px;
+            border-radius: 6px;
+            border-left: 4px solid #d32f2f;
+        }
+        
+        .document-title {
+            font-size: 28px;
+            font-weight: 800;
+            margin: 0 0 10px 0;
+            letter-spacing: 1px;
+            color: #d32f2f;
+        }
+        
+        .document-subtitle {
+            font-size: 12px;
+            font-weight: 600;
+            margin: 5px 0;
+            color: #6c757d;
+        }
+        
+        /* Contenu principal */
+        .document-content {
+            margin-bottom: 30px;
+        }
+        
+        /* Section totaux (optionnelle) */
+        .totals-section {
+            margin-top: 30px;
+            margin-bottom: 30px;
+        }
+        
+        .totals-box {
+            width: 100%;
+            max-width: 400px;
+            margin-left: auto;
+            background: #ffffff;
+            border: 2px solid #d32f2f;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(211, 47, 47, 0.15);
+        }
+        
+        .totals-header {
+            background: #d32f2f;
+            padding: 12px 20px;
+            color: white;
+        }
+        
+        .totals-header-title {
+            font-size: 13px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin: 0;
+        }
+        
+        .totals-content {
+            padding: 20px;
+        }
+        
+        .totals-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .totals-row:last-child {
+            border-bottom: none;
+        }
+        
+        .totals-label {
+            font-size: 11px;
+            color: #6c757d;
+            font-weight: 500;
+        }
+        
+        .totals-value {
+            font-size: 12px;
+            color: #2c3e50;
+            font-weight: 600;
+        }
+        
+        .totals-row.total-ttc {
+            background: #d32f2f;
+            color: white;
+            padding: 18px 20px;
+            margin: 15px -20px -20px -20px;
+            border-radius: 0 0 6px 6px;
+            border-bottom: none;
+        }
+        
+        .totals-row.total-ttc .totals-label {
+            color: white;
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        
+        .totals-row.total-ttc .totals-value {
+            color: white;
+            font-size: 18px;
+            font-weight: 800;
+        }
+        
+    /* Footer avec cachet */
+    .document-footer {
+        margin-top: 50px;
+        padding-top: 20px;
+        border-top: 2px solid #e9ecef;
+        text-align: center;
+        position: relative;
+    }
+    
+    .footer-message {
+        font-size: 14px;
+        font-weight: 600;
+        color: #d32f2f;
+        margin: 0;
+    }
+        
+        /* Cachet de l'entreprise en bas à droite */
+        .company-seal {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            text-align: center;
+        }
+        
+        .seal-logo {
+            width: 70px;
+            height: 70px;
+            object-fit: contain;
+            opacity: 0.4;
+        }
+        
+        .seal-company-name {
+            font-size: 9px;
+            color: #666;
+            margin-top: 5px;
+        }
+        
+        /* Styles pour tableaux */
+        table {
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+            margin-bottom: 20px;
+        }
+        
+        thead {
+            background: #d32f2f;
+            color: white;
+        }
+        
+        th {
+            padding: 14px 12px;
+            text-align: left;
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        th:first-child {
+            padding-left: 18px;
+        }
+        
+        th:last-child {
+            padding-right: 18px;
+        }
+        
+        th.text-center {
+            text-align: center;
+        }
+        
+        th.text-right {
+            text-align: right;
+        }
+        
+        tbody tr {
+            transition: background-color 0.2s;
+        }
+        
+        tbody tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+        
+        tbody tr:hover {
+            background-color: #e9ecef;
+        }
+        
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #e9ecef;
+            font-size: 11px;
+            color: #495057;
+        }
+        
+        td:first-child {
+            padding-left: 18px;
+        }
+        
+        td:last-child {
+            padding-right: 18px;
+        }
+        
+        .text-center {
+            text-align: center;
+        }
+        
+        .text-right {
+            text-align: right;
+        }
+        
+        /* Responsive pour impression */
+        @media print {
+            body {
+                background: white;
+            }
+            
+            .document-header {
+                break-inside: avoid;
+            }
+            
+            table {
+                break-inside: avoid;
+            }
+            
+            .totals-box {
+                break-inside: avoid;
+            }
+            
+            .company-seal {
+                break-inside: avoid;
+            }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Header avec logo et informations entreprise -->
+    <div class="document-header">
+        <div class="header-content">
+            <div class="logo-section">
+                {% if logo_url %}
+                    <img src="{{ logo_url }}" alt="Logo" class="logo" />
+                {% else %}
+                    <div class="logo-placeholder">
+                        <span>LOGO</span>
+                    </div>
+                {% endif %}
+                <div class="company-info">
+                    <h1 class="company-name">{{ company.nom|default:"GOÛTS ET SAVEURS D'AFRIQUE" }}</h1>
+                    <div class="company-details">
+                        {% if company.adresse %}<p style="margin: 0; padding: 0;">{{ company.adresse }}</p>{% endif %}
+                        {% if company.code_postal and company.ville %}
+                            <p style="margin: 2px 0; padding: 0;">{{ company.code_postal }} {{ company.ville }}{% if company.pays %}, {{ company.pays }}{% endif %}</p>
+                        {% elif company.ville %}
+                            <p style="margin: 2px 0; padding: 0;">{{ company.ville }}{% if company.pays %}, {{ company.pays }}{% endif %}</p>
+                        {% endif %}
+                        {% if company.telephone %}<p style="margin: 2px 0; padding: 0;">Tél: {{ company.telephone }}</p>{% endif %}
+                        {% if company.email %}<p style="margin: 2px 0; padding: 0;">Email: {{ company.email }}</p>{% endif %}
+                        {% if company.site_web %}<p style="margin: 2px 0; padding: 0;">{{ company.site_web }}</p>{% endif %}
+                    </div>
+                </div>
+            </div>
+            <div class="document-title-section">
+                {% block document_title %}
+                    <h2 class="document-title">DOCUMENT</h2>
+                {% endblock %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenu principal -->
+    <div class="document-content">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Section totaux (optionnelle) -->
+    {% block totals_section %}{% endblock %}
+
+    <!-- Footer -->
+    <div class="document-footer">
+        <p class="footer-message">{{ company.message_facture|default:"Merci pour votre confiance !" }}</p>
+    </div>
+
+    <!-- Cachet de l'entreprise en filigrane au centre -->
+    <div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); text-align: center;">
+        {% if logo_url %}
+            <img src="{{ logo_url }}" alt="Cachet" style="width: 70px; height: 70px; opacity: 0.15;" />
+        {% endif %}
+    </div>
+</body>
+</html>
+

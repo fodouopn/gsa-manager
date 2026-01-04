@@ -1,0 +1,237 @@
+{% extends "billing/base_print_template.html" %}
+{% load static %}
+
+{% block title %}Fiche Client - {{ client.nom_complet }}{% endblock %}
+
+{% block header_right %}
+<div style="text-align: right;">
+    <div class="document-title">FICHE CLIENT</div>
+    <div style="font-size: 11px; color: #666; margin-top: 5px;">
+        Date d'édition : {{ "now"|date:"d/m/Y à H:i" }}
+    </div>
+</div>
+{% endblock %}
+
+{% block content %}
+<!-- Informations Client -->
+<div style="margin-bottom: 30px;">
+    <div class="section-title">INFORMATIONS CLIENT</div>
+    <div style="background-color: #f8f9fa; padding: 15px; border-radius: 5px; border-left: 4px solid #d32f2f;">
+        <table style="width: 100%; border-collapse: collapse;">
+            <tr>
+                <td style="padding: 5px 0; font-weight: bold; width: 150px;">Nom complet :</td>
+                <td style="padding: 5px 0;">{{ client.nom_complet }}</td>
+            </tr>
+            {% if client.entreprise %}
+            <tr>
+                <td style="padding: 5px 0; font-weight: bold;">Entreprise :</td>
+                <td style="padding: 5px 0;">{{ client.entreprise }}</td>
+            </tr>
+            {% endif %}
+            {% if client.adresse %}
+            <tr>
+                <td style="padding: 5px 0; font-weight: bold;">Adresse :</td>
+                <td style="padding: 5px 0;">{{ client.adresse }}</td>
+            </tr>
+            {% endif %}
+            {% if client.code_postal or client.ville %}
+            <tr>
+                <td style="padding: 5px 0; font-weight: bold;">Ville :</td>
+                <td style="padding: 5px 0;">
+                    {% if client.code_postal %}{{ client.code_postal }} {% endif %}{{ client.ville }}{% if client.pays %}, {{ client.pays }}{% endif %}
+                </td>
+            </tr>
+            {% endif %}
+            {% if client.email %}
+            <tr>
+                <td style="padding: 5px 0; font-weight: bold;">Email :</td>
+                <td style="padding: 5px 0;">{{ client.email }}</td>
+            </tr>
+            {% endif %}
+            {% if client.telephone %}
+            <tr>
+                <td style="padding: 5px 0; font-weight: bold;">Téléphone :</td>
+                <td style="padding: 5px 0;">{{ client.telephone }}</td>
+            </tr>
+            {% endif %}
+            {% if client.siret %}
+            <tr>
+                <td style="padding: 5px 0; font-weight: bold;">SIRET :</td>
+                <td style="padding: 5px 0;">{{ client.siret }}</td>
+            </tr>
+            {% endif %}
+            {% if client.tva_intracommunautaire %}
+            <tr>
+                <td style="padding: 5px 0; font-weight: bold;">TVA :</td>
+                <td style="padding: 5px 0;">{{ client.tva_intracommunautaire }}</td>
+            </tr>
+            {% endif %}
+            <tr>
+                <td style="padding: 5px 0; font-weight: bold;">Statut :</td>
+                <td style="padding: 5px 0;">
+                    {% if client.actif %}
+                        <span style="color: #4CAF50; font-weight: bold;">● Actif</span>
+                    {% else %}
+                        <span style="color: #f44336; font-weight: bold;">● Inactif</span>
+                    {% endif %}
+                </td>
+            </tr>
+        </table>
+    </div>
+</div>
+
+<!-- Résumé Financier -->
+<div style="margin-bottom: 30px;">
+    <div class="section-title">RÉSUMÉ FINANCIER</div>
+    <div style="display: flex; gap: 15px; flex-wrap: wrap;">
+        <div style="flex: 1; min-width: 200px; background-color: #fff3cd; padding: 15px; border-radius: 5px; border: 2px solid #ffc107;">
+            <div style="font-size: 10px; color: #856404; margin-bottom: 5px; font-weight: bold;">SOMME DUE AU CLIENT</div>
+            <div style="font-size: 18px; font-weight: bold; color: #ef4444;">{{ total_due|floatformat:2 }} €</div>
+        </div>
+        <div style="flex: 1; min-width: 200px; background-color: #d1ecf1; padding: 15px; border-radius: 5px; border: 2px solid #2196F3;">
+            <div style="font-size: 10px; color: #0c5460; margin-bottom: 5px; font-weight: bold;">CRÉDIT CLIENT</div>
+            <div style="font-size: 18px; font-weight: bold; color: #2196F3;">{{ total_owed|floatformat:2 }} €</div>
+        </div>
+    </div>
+    {% if total_owed > 0 %}
+    <div style="margin-top: 15px; padding: 10px; background-color: #f8f9fa; border-radius: 5px; font-size: 10px;">
+        <strong>Détail du crédit :</strong><br>
+        {% if total_avoirs > 0 %}Avoirs : {{ total_avoirs|floatformat:2 }} €<br>{% endif %}
+        {% if excess_invoice_payments > 0 %}Excédent factures : {{ excess_invoice_payments|floatformat:2 }} €<br>{% endif %}
+        {% if total_unpaid_purchases > 0 %}Achats impayés : {{ total_unpaid_purchases|floatformat:2 }} €<br>{% endif %}
+        {% if excess_purchase_payments > 0 %}Excédent achats : {{ excess_purchase_payments|floatformat:2 }} €{% endif %}
+    </div>
+    {% endif %}
+</div>
+
+<!-- Factures -->
+<div style="margin-bottom: 30px;">
+    <div class="section-title">FACTURES</div>
+    <table>
+        <thead>
+            <tr>
+                <th class="text-center">N° Facture</th>
+                <th class="text-center">Date</th>
+                <th class="text-right">Montant Total (€)</th>
+                <th class="text-right">Montant payé (€)</th>
+                <th class="text-right">Reste à payer (€)</th>
+                <th class="text-center">Statut</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for invoice in invoices %}
+            <tr>
+                <td class="text-center">{{ invoice.numero|default:"Brouillon" }}</td>
+                <td class="text-center">{{ invoice.created_at|date:"d/m/Y" }}</td>
+                <td class="text-right">{{ invoice.total_ttc|floatformat:2 }} €</td>
+                <td class="text-right">{{ invoice.paye|floatformat:2 }} €</td>
+                <td class="text-right">{{ invoice.reste|floatformat:2 }} €</td>
+                <td class="text-center">{{ invoice.get_statut_display }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" class="text-center">Aucune facture</td>
+            </tr>
+            {% endfor %}
+            {% if invoices %}
+            <tr class="total-row">
+                <td colspan="2" class="text-right"><strong>Total général :</strong></td>
+                <td class="text-right"><strong>{{ total_invoices|floatformat:2 }} €</strong></td>
+                <td class="text-right"><strong>{{ total_paid|floatformat:2 }} €</strong></td>
+                <td class="text-right"><strong>{{ total_due|floatformat:2 }} €</strong></td>
+                <td></td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+</div>
+
+<!-- Avoirs -->
+{% if avoirs %}
+<div style="margin-bottom: 30px;">
+    <div class="section-title">AVOIRS</div>
+    <table>
+        <thead>
+            <tr>
+                <th class="text-center">N° Avoir</th>
+                <th class="text-center">Date</th>
+                <th class="text-right">Montant (€)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for avoir in avoirs %}
+            <tr>
+                <td class="text-center">{{ avoir.numero|default:"Brouillon" }}</td>
+                <td class="text-center">{{ avoir.created_at|date:"d/m/Y" }}</td>
+                <td class="text-right">{{ avoir.total_ttc|floatformat:2 }} €</td>
+            </tr>
+            {% endfor %}
+            <tr class="total-row">
+                <td colspan="2" class="text-right"><strong>Total avoirs :</strong></td>
+                <td class="text-right"><strong>{{ total_avoirs|floatformat:2 }} €</strong></td>
+            </tr>
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<!-- Achats (si client est aussi fournisseur) -->
+{% if purchases %}
+<div style="margin-bottom: 30px;">
+    <div class="section-title">ACHATS (Client en tant que fournisseur)</div>
+    <table>
+        <thead>
+            <tr>
+                <th class="text-center">Référence</th>
+                <th class="text-center">Date</th>
+                <th class="text-right">Montant Total (€)</th>
+                <th class="text-right">Montant payé (€)</th>
+                <th class="text-right">Reste à payer (€)</th>
+                <th class="text-center">Statut</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for purchase in purchases %}
+            <tr>
+                <td class="text-center">{{ purchase.reference }}</td>
+                <td class="text-center">{{ purchase.date_achat|date:"d/m/Y" }}</td>
+                <td class="text-right">{{ purchase.total|floatformat:2 }} €</td>
+                <td class="text-right">{{ purchase.paye|floatformat:2 }} €</td>
+                <td class="text-right">{{ purchase.reste|floatformat:2 }} €</td>
+                <td class="text-center">{{ purchase.get_statut_display }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+
+<!-- Paiements -->
+{% if payments %}
+<div style="margin-bottom: 30px;">
+    <div class="section-title">HISTORIQUE DES PAIEMENTS</div>
+    <table>
+        <thead>
+            <tr>
+                <th class="text-center">Date</th>
+                <th>Facture</th>
+                <th>Mode de paiement</th>
+                <th class="text-right">Montant (€)</th>
+                <th>Référence</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for payment in payments %}
+            <tr>
+                <td class="text-center">{{ payment.date|date:"d/m/Y" }}</td>
+                <td>{{ payment.invoice.numero|default:"-" }}</td>
+                <td>{{ payment.get_mode_display }}</td>
+                <td class="text-right">{{ payment.montant|floatformat:2 }} €</td>
+                <td>{{ payment.reference|default:"-" }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endif %}
+{% endblock %}

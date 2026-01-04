@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Rapport Clients - {{ date_str }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1.5cm;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 11px;
+            line-height: 1.4;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #d32f2f;
+            padding-bottom: 15px;
+        }
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin: 0 0 10px 0;
+        }
+        .date {
+            font-size: 14px;
+            color: #666;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th {
+            background-color: #d32f2f;
+            color: white;
+            padding: 10px;
+            text-align: left;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        td {
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+            font-size: 10px;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .text-center {
+            text-align: center;
+        }
+        .footer {
+            margin-top: 40px;
+            padding-top: 15px;
+            border-top: 1px solid #ddd;
+            font-size: 10px;
+            color: #666;
+            text-align: center;
+        }
+        .total-row {
+            font-weight: bold;
+            background-color: #f5f5f5;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 class="title">RAPPORT CLIENTS</h1>
+        <div class="date">Date : {{ target_date|date:"d/m/Y" }}</div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th class="text-center">N°</th>
+                <th>Client</th>
+                <th>Entreprise</th>
+                <th>Ville</th>
+                <th class="text-right">Factures impayées</th>
+                <th class="text-right">Montant dû (€)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in clients_data %}
+            <tr>
+                <td class="text-center">{{ forloop.counter }}</td>
+                <td>{{ item.client.nom_complet }}</td>
+                <td>{{ item.client.entreprise|default:"-" }}</td>
+                <td>{{ item.client.ville|default:"-" }}</td>
+                <td class="text-right">{{ item.unpaid_count }}</td>
+                <td class="text-right">{{ item.total_due|floatformat:2 }} €</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" class="text-center">Aucun client avec des sommes dues</td>
+            </tr>
+            {% endfor %}
+            {% if clients_data %}
+            <tr class="total-row">
+                <td colspan="5" class="text-right"><strong>Total général :</strong></td>
+                <td class="text-right">
+                    <strong>{{ total_due|floatformat:2 }} €</strong>
+                </td>
+            </tr>
+            {% endif %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        <p>Rapport généré le {{ "now"|date:"d/m/Y à H:i" }}</p>
+    </div>
+</body>
+</html>
+

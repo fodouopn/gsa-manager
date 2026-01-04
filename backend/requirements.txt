@@ -30,3 +30,6 @@ python-dateutil==2.8.2
 
 # Utilities
 Pillow==10.2.0
+
+# Production WSGI Server
+gunicorn==21.2.0

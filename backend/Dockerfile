@@ -19,11 +19,8 @@ RUN apt-get update && apt-get install -y \
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
-# Copy project files
-COPY . .
-
-# Create media directory
-RUN mkdir -p media/invoices
+# Create media directory (files will be mounted via volumes)
+RUN mkdir -p media/invoices media/reports
 
 # Expose port
 EXPOSE 8000

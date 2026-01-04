@@ -1,0 +1,120 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: gsa_postgres_dev
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-gsa_db}
+      POSTGRES_USER: ${POSTGRES_USER:-gsa_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-gsa_password}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    ports:
+      - "5432:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-gsa_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: gsa_redis_dev
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ../../backend
+      dockerfile: Dockerfile
+    container_name: gsa_backend_dev
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - ../../backend:/app
+      - backend_static:/app/staticfiles
+      - backend_media:/app/media
+    ports:
+      - "8000:8000"
+    environment:
+      - DEBUG=1
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-gsa_user}:${POSTGRES_PASSWORD:-gsa_password}@postgres:5432/${POSTGRES_DB:-gsa_db}
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - SECRET_KEY=${SECRET_KEY:-django-insecure-dev-key-change-in-production}
+      - SUPER_ADMIN_EMAIL=${SUPER_ADMIN_EMAIL:-admin@gsa.fr}
+      - SUPER_ADMIN_PASSWORD=${SUPER_ADMIN_PASSWORD:-admin123}
+      - JWT_SECRET_KEY=${JWT_SECRET_KEY:-jwt-secret-key-change-in-production}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health/"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  celery:
+    build:
+      context: ../../backend
+      dockerfile: Dockerfile
+    container_name: gsa_celery_dev
+    command: celery -A gsa_backend worker --loglevel=info
+    volumes:
+      - ../../backend:/app
+      - backend_media:/app/media
+    environment:
+      - DEBUG=1
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-gsa_user}:${POSTGRES_PASSWORD:-gsa_password}@postgres:5432/${POSTGRES_DB:-gsa_db}
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - SECRET_KEY=${SECRET_KEY:-django-insecure-dev-key-change-in-production}
+    depends_on:
+      - postgres
+      - redis
+      - backend
+
+  celery-beat:
+    build:
+      context: ../../backend
+      dockerfile: Dockerfile
+    container_name: gsa_celery_beat_dev
+    command: celery -A gsa_backend beat --loglevel=info
+    volumes:
+      - ../../backend:/app
+    environment:
+      - DEBUG=1
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-gsa_user}:${POSTGRES_PASSWORD:-gsa_password}@postgres:5432/${POSTGRES_DB:-gsa_db}
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+      - SECRET_KEY=${SECRET_KEY:-django-insecure-dev-key-change-in-production}
+    depends_on:
+      - postgres
+      - redis
+      - backend
+
+  frontend:
+    build:
+      context: ../../frontend
+      dockerfile: Dockerfile.dev
+    container_name: gsa_frontend_dev
+    volumes:
+      - ../../frontend:/app
+      - /app/node_modules
+    ports:
+      - "5173:5173"
+    environment:
+      - VITE_API_URL=http://localhost:8000/api
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  backend_static:
+  backend_media:

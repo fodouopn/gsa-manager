@@ -1,0 +1,7 @@
+# Docker ignore pour frontend
+node_modules
+dist
+.vite
+*.log
+.DS_Store
+

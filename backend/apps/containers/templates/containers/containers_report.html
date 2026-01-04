@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Rapport Conteneurs - {{ date_str }}</title>
+    <style>
+        @page {
+            size: A4;
+            margin: 1.5cm;
+        }
+        body {
+            font-family: Arial, sans-serif;
+            font-size: 11px;
+            line-height: 1.4;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 25px;
+            border-bottom: 2px solid #d32f2f;
+            padding-bottom: 15px;
+        }
+        .title {
+            font-size: 24px;
+            font-weight: bold;
+            color: #2c3e50;
+            margin: 0 0 10px 0;
+        }
+        .date {
+            font-size: 14px;
+            color: #666;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th {
+            background-color: #d32f2f;
+            color: white;
+            padding: 10px;
+            text-align: left;
+            font-size: 11px;
+            font-weight: bold;
+        }
+        td {
+            padding: 8px;
+            border-bottom: 1px solid #ddd;
+            font-size: 10px;
+        }
+        .text-right {
+            text-align: right;
+        }
+        .text-center {
+            text-align: center;
+        }
+        .footer {
+            margin-top: 40px;
+            padding-top: 15px;
+            border-top: 1px solid #ddd;
+            font-size: 10px;
+            color: #666;
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1 class="title">RAPPORT CONTENEURS</h1>
+        <div class="date">Date : {{ target_date|date:"d/m/Y" }}</div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th class="text-center">N°</th>
+                <th>Référence</th>
+                <th>Date arrivée estimée</th>
+                <th>Date arrivée réelle</th>
+                <th>Statut</th>
+                <th class="text-right">Qté prévue</th>
+                <th class="text-right">Qté reçue</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in containers_data %}
+            <tr>
+                <td class="text-center">{{ forloop.counter }}</td>
+                <td>{{ item.container.ref }}</td>
+                <td>{{ item.container.date_arrivee_estimee|date:"d/m/Y" }}</td>
+                <td>{{ item.container.date_arrivee_reelle|date:"d/m/Y"|default:"-" }}</td>
+                <td>{{ item.container.get_statut_display }}</td>
+                <td class="text-right">{{ item.total_prevue }}</td>
+                <td class="text-right">{{ item.total_recue }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="7" class="text-center">Aucun conteneur</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="footer">
+        <p>Rapport généré le {{ "now"|date:"d/m/Y à H:i" }}</p>
+    </div>
+</body>
+</html>
+

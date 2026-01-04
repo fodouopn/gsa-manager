@@ -125,7 +125,7 @@ Les tests couvrent au minimum :
 
 Le projet est structuré pour être déployé sur un VPS (ex: Hetzner) via Docker Compose sans refonte.
 
-Voir `docker/prod/` pour les configurations de production.
+**📖 Guide complet de déploiement** : Consultez [`DEPLOYMENT.md`](DEPLOYMENT.md) pour toutes les instructions détaillées (achat domaine, configuration DNS, transfert du projet, certificat SSL, déploiement, maintenance).
 
 ## 📄 Licence
 

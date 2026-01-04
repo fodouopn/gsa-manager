@@ -1,0 +1,277 @@
+{% extends "billing/base_print_template.html" %}
+{% load static %}
+{% load custom_filters %}
+
+{% block title %}Facture {{ invoice.numero }}{% endblock %}
+
+{% block document_title %}
+    <h2 class="document-title">FACTURE</h2>
+    <div class="document-subtitle">N° {{ invoice.numero|default:"Brouillon" }}</div>
+    <div class="document-subtitle">Date: {{ invoice.created_at|date:"d/m/Y" }}</div>
+{% endblock %}
+
+{% block content %}
+<style>
+    .client-info {
+        margin-bottom: 25px;
+        padding: 15px;
+        background: #f8f9fa;
+        border-left: 3px solid #d32f2f;
+    }
+    
+    .client-info p {
+        margin: 4px 0;
+        font-size: 11px;
+    }
+    
+    .products-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-bottom: 20px;
+    }
+    
+    .products-table th {
+        background: #d32f2f;
+        color: white;
+        padding: 10px;
+        text-align: left;
+        font-size: 10px;
+        font-weight: bold;
+    }
+    
+    .products-table th.text-right {
+        text-align: right;
+    }
+    
+    .products-table th.text-center {
+        text-align: center;
+    }
+    
+    .products-table td {
+        padding: 8px 10px;
+        border-bottom: 1px solid #e0e0e0;
+        font-size: 10px;
+    }
+    
+    .products-table td.text-right {
+        text-align: right;
+    }
+    
+    .products-table td.text-center {
+        text-align: center;
+    }
+    
+    .totals-box {
+        width: 280px;
+        margin-left: auto;
+        margin-top: 20px;
+        border: 1px solid #d0d0d0;
+    }
+    
+    .totals-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 6px 12px;
+        font-size: 10px;
+        border-bottom: 1px solid #e0e0e0;
+    }
+    
+    .totals-row:last-child {
+        border-bottom: none;
+    }
+    
+    .total-ttc {
+        background: #d32f2f;
+        color: white;
+        font-weight: bold;
+        font-size: 11px;
+    }
+    
+    .payment-info {
+        margin-top: 20px;
+        font-size: 10px;
+        padding: 12px;
+        background: #f8f9fa;
+        border-left: 3px solid #10b981;
+    }
+    
+    .payment-info p {
+        margin: 4px 0;
+    }
+    
+    .payment-status {
+        margin-top: 20px;
+        padding: 15px;
+        border-radius: 8px;
+        font-size: 11px;
+        font-weight: 600;
+        text-align: center;
+    }
+    
+    .payment-status.paid {
+        background: #d1fae5;
+        color: #065f46;
+        border: 2px solid #10b981;
+    }
+    
+    .payment-status.partial {
+        background: #fef3c7;
+        color: #92400e;
+        border: 2px solid #f59e0b;
+    }
+    
+    .payment-status.unpaid {
+        background: #fee2e2;
+        color: #991b1b;
+        border: 2px solid #ef4444;
+    }
+    
+    .payment-details {
+        margin-top: 15px;
+        padding: 12px;
+        background: #ffffff;
+        border: 1px solid #e5e7eb;
+        border-radius: 6px;
+    }
+    
+    .payment-details-row {
+        display: flex;
+        justify-content: space-between;
+        padding: 6px 0;
+        border-bottom: 1px solid #f3f4f6;
+    }
+    
+    .payment-details-row:last-child {
+        border-bottom: none;
+    }
+    
+    .payment-details-label {
+        font-weight: 500;
+        color: #6b7280;
+    }
+    
+    .payment-details-value {
+        font-weight: 600;
+        color: #1f2937;
+    }
+    
+    .seal-container {
+        position: absolute;
+        bottom: 20px;
+        right: 20px;
+        text-align: center;
+    }
+    
+    .seal-logo {
+        width: 80px;
+        height: 80px;
+        opacity: 0.4;
+    }
+    
+    .seal-text {
+        font-size: 9px;
+        color: #666;
+        margin-top: 5px;
+    }
+</style>
+
+<div class="client-info">
+    <p><strong>{{ invoice.client.nom_complet }}</strong></p>
+    {% if invoice.client.entreprise %}<p>{{ invoice.client.entreprise }}</p>{% endif %}
+    {% if invoice.client.adresse %}<p>{{ invoice.client.adresse }}</p>{% endif %}
+    {% if invoice.client.code_postal and invoice.client.ville %}
+        <p>{{ invoice.client.code_postal }} {{ invoice.client.ville }}{% if invoice.client.pays %}, {{ invoice.client.pays }}{% endif %}</p>
+    {% endif %}
+</div>
+
+<table class="products-table">
+    <thead>
+        <tr>
+            <th>Désignation</th>
+            <th class="text-right">Prix Unitaire</th>
+            <th class="text-center">Quantité</th>
+            <th class="text-right">Total HT</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for line in lines %}
+        <tr>
+            <td>{{ line.product.nom }} ({{ line.product.get_unite_vente_display }})</td>
+            <td class="text-right">{{ line.prix_unit_applique|floatformat:2 }} €</td>
+            <td class="text-center">{{ line.qty|floatformat:0 }}</td>
+            <td class="text-right">{{ line.total_ligne|floatformat:2 }} €</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<div class="totals-box">
+    <div class="totals-row">
+        <span>Total HT</span>
+        <span>{{ invoice.total|floatformat:2 }} €</span>
+    </div>
+    {% if invoice.tva_jus > 0 %}
+    <div class="totals-row">
+        <span>TVA Jus ({{ company.tva_jus|floatformat:1 }}%)</span>
+        <span>{{ invoice.tva_jus|floatformat:2 }} €</span>
+    </div>
+    {% endif %}
+    {% if invoice.tva_biere > 0 %}
+    <div class="totals-row">
+        <span>TVA Bière ({{ company.tva_biere|floatformat:1 }}%)</span>
+        <span>{{ invoice.tva_biere|floatformat:2 }} €</span>
+    </div>
+    {% endif %}
+    <div class="totals-row total-ttc">
+        <span>Total TTC</span>
+        <span>{{ invoice.total_ttc|floatformat:2 }} €</span>
+    </div>
+    {% if invoice.reste > 0 %}
+    <div class="totals-row" style="background: #fee2e2; color: #dc2626; font-weight: bold;">
+        <span>Restant dû</span>
+        <span>{{ invoice.reste|floatformat:2 }} €</span>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Détails des paiements -->
+{% if invoice.paye > 0 %}
+<div class="payment-details">
+    <div class="payment-details-row">
+        <span class="payment-details-label">Total TTC :</span>
+        <span class="payment-details-value">{{ invoice.total_ttc|floatformat:2 }} €</span>
+    </div>
+    <div class="payment-details-row">
+        <span class="payment-details-label">Montant payé :</span>
+        <span class="payment-details-value" style="color: #10b981;">{{ invoice.paye|floatformat:2 }} €</span>
+    </div>
+    {% if invoice.reste > 0 %}
+    <div class="payment-details-row">
+        <span class="payment-details-label">Reste à payer :</span>
+        <span class="payment-details-value" style="color: #ef4444; font-weight: 700;">{{ invoice.reste|floatformat:2 }} €</span>
+    </div>
+    {% else %}
+    <div class="payment-details-row">
+        <span class="payment-details-label">Reste à payer :</span>
+        <span class="payment-details-value" style="color: #10b981; font-weight: 700;">0,00 €</span>
+    </div>
+    {% endif %}
+</div>
+{% endif %}
+
+<div class="payment-info">
+    {% if invoice.reste > 0 %}
+        <p><strong>Paiement :</strong> À régler sous 14 jours</p>
+    {% else %}
+        <p><strong>Paiement :</strong> Facture réglée</p>
+    {% endif %}
+    {% if company.numero_compte_bancaire %}
+        <p><strong>IBAN:</strong> {{ company.numero_compte_bancaire }}</p>
+    {% endif %}
+    {% if invoice.numero %}
+        <p><strong>Référence:</strong> {{ invoice.numero }}</p>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block totals_section %}{% endblock %}
